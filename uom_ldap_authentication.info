@@ -1,0 +1,8 @@
+name = LDAP Authentication - UoM Departments
+description = Implements LDAP authentication for UoM Department members
+package = University of Melbourne
+dependencies[] = ldap_authentication
+dependencies[] = uom_ldap
+core = 7.x
+
+configure = admin/config/people/ldap/uom-departments

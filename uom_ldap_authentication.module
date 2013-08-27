@@ -1,0 +1,79 @@
+<?php
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function uom_ldap_authentication_menu() {
+  $items['admin/config/people/ldap/uom-departments'] = array(
+    'title' => t('UoM Departments'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uom_ldap_authentication_settings_form'),
+    'access arguments' => array('administer users'),
+    'file' => 'uom_ldap_authentication.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_ldap_authentication_allowuser_results_alter().
+ */
+function _uom_ldap_authentication_ldap_authentication_allowuser_results_alter($ldap_user_entry, $name, &$result) {
+//  $policy = variable_get('uom_ldap_authentication_policy', 1);
+//  $result = !empty($policy);
+
+  // Default to empty array.
+  $departments = _uom_ldap_authentication_list_to_array(variable_get('uom_ldap_authentication_departments', ''));
+
+  $numbers = _uom_ldap_authentication_attribute_values($ldap_user_entry, variable_get('uom_ldap_authentication_numbers', 'uomdepartmentnumbers'));
+  $names   = _uom_ldap_authentication_attribute_values($ldap_user_entry, variable_get('uom_ldap_authentication_names', 'uomdepartments'));
+
+  dpm($ldap_user_entry, __FUNCTION__ . ': $ldap_user_entry');
+  dpm($departments, __FUNCTION__ . ': $departments');
+  dpm($numbers, __FUNCTION__ . ': $numbers');
+  dpm($names, __FUNCTION__ . ': $names');
+}
+
+/**
+ * Turn the blob of delimited departments into an array.
+ */
+function _uom_ldap_authentication_list_to_array($list) {
+  $departments = array();
+
+  $mappings = preg_split('/[\n\r]+/', $list);
+  foreach ($mappings as $line) {
+    $line = drupal_strtolower(trim($line));
+    list ($number, $name) = explode('|', $line);
+    if (empty($number) && empty($name)) {
+      continue;
+    }
+    if (empty($number)) {
+      $departments[] = $name;
+    }
+    else {
+      $departments[$number] = $name;
+    }
+  }
+  return $departments;
+}
+
+/**
+ * Return an array of attribute values from the ldap entry.
+ */
+function _uom_ldap_authentication_attribute_values($entry, $attribute) {
+  $values = array();
+  if (!is_array($entry['attr'][$attribute])) {
+    return $values;
+  }
+
+  foreach ($entry['attr'][$attribute] as $key => $val) {
+    if (is_digit($key)) {
+      $values[$key] = drupal_strtolower($val);
+    }
+  }
+  return $values;
+}
