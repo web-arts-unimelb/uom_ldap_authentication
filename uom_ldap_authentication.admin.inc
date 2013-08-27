@@ -25,8 +25,8 @@ function uom_ldap_authentication_settings_form() {
     '#description' => t('Set a default policy for LDAP users that do not match listed departments. This does not apply to users without LDAP entries.'),
     '#type' => 'radios',
     '#options' => array(
-      0 => t('Only allow users from listed departments, reject others.'),
-      1 => t('Allow users from any department.'),
+      0 => t('Enabled, only allow users from listed departments, reject others.'),
+      1 => t('Disabled, allow users from any department.'),
     ),
     '#default_value' => variable_get('uom_ldap_authentication_policy', 1),
     '#required' => TRUE,
