@@ -22,26 +22,30 @@ function uom_ldap_authentication_menu() {
 /**
  * Implements hook_ldap_authentication_allowuser_results_alter().
  */
-function _uom_ldap_authentication_ldap_authentication_allowuser_results_alter($ldap_user_entry, $name, &$result) {
-//  $policy = variable_get('uom_ldap_authentication_policy', 1);
-//  $result = !empty($policy);
+function uom_ldap_authentication_ldap_authentication_allowuser_results_alter($ldap_user_entry, $name, &$result) {
+  $policy = variable_get('uom_ldap_authentication_policy', 1);
+  $result = !empty($policy);
 
-  // Default to empty array.
   $departments = _uom_ldap_authentication_list_to_array(variable_get('uom_ldap_authentication_departments', ''));
 
   $numbers = _uom_ldap_authentication_attribute_values($ldap_user_entry, variable_get('uom_ldap_authentication_numbers', 'uomdepartmentnumbers'));
   $names   = _uom_ldap_authentication_attribute_values($ldap_user_entry, variable_get('uom_ldap_authentication_names', 'uomdepartments'));
 
-  dpm($ldap_user_entry, __FUNCTION__ . ': $ldap_user_entry');
-  dpm($departments, __FUNCTION__ . ': $departments');
-  dpm($numbers, __FUNCTION__ . ': $numbers');
-  dpm($names, __FUNCTION__ . ': $names');
+  // Check which of the required names and numbers are present in the user.
+  $numbermatch = array_intersect_key($numbers, $departments);
+  $namematch   = array_intersect($names, $departments);
+
+  // If the user contained a required name or number, grant access.
+  if (!empty($numbermatch) || !empty($numbermatch)) {
+    $result = TRUE;
+  }
 }
 
 /**
  * Turn the blob of delimited departments into an array.
  */
 function _uom_ldap_authentication_list_to_array($list) {
+  // Default to empty array.
   $departments = array();
 
   $mappings = preg_split('/[\n\r]+/', $list);
@@ -71,8 +75,9 @@ function _uom_ldap_authentication_attribute_values($entry, $attribute) {
   }
 
   foreach ($entry['attr'][$attribute] as $key => $val) {
-    if (is_digit($key)) {
-      $values[$key] = drupal_strtolower($val);
+    if (is_numeric($key)) {
+      $val = drupal_strtolower($val);
+      $values[$val] = $val;
     }
   }
   return $values;
